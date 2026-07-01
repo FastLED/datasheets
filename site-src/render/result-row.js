@@ -25,7 +25,7 @@ export function renderResultRow(doc, highlightNeedles = []) {
   const kind = escapeHtml(doc.canonical_kind || '');
   const productType = escapeHtml(doc.product_type || '');
   const path = String(doc.path || '');
-  const href = pdfHref(path);
+  const href = pdfHref(path, doc.is_lfs);
 
   const bytes = fmtBytes(doc.size_bytes);
   const pages = fmtPages(doc.page_count);

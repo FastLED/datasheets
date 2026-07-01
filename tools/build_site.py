@@ -114,12 +114,98 @@ def _copy_top_level_files() -> None:
         print(f"[copy] {src} -> {dst}")
 
 
-def _write_meta(commit: str, memex_sha: str, doc_count: int) -> Path:
+def _detect_lfs_pointer(path: Path) -> bool:
+    """Return True if `path` is an unresolved LFS pointer file.
+
+    LFS pointer files are ~130 bytes and start with the literal string
+    "version https://git-lfs.github.com/spec/v1". If a checkout ran
+    without `lfs: true`, PDFs on disk will still be pointer files —
+    we detect this so the frontend can route around it.
+    """
+    try:
+        with path.open("rb") as fh:
+            head = fh.read(64)
+        return head.startswith(b"version https://git-lfs.github.com/spec/v1")
+    except OSError:
+        return False
+
+
+def _pdf_root_config(commit: str) -> dict:
+    """Choose the PDF URL template.
+
+    Env vars (set in the workflow when we want to override the default):
+      DATASHEETS_PDF_ROOT — literal prefix. If set, wins outright.
+      DATASHEETS_REPO     — `owner/name` used to build a raw URL for public repos.
+
+    Otherwise default to shipping locally under `pdf/` — the safe choice
+    for the private FastLED/datasheets repo, and works for public repos
+    that don't want to hotlink from raw.githubusercontent.com.
+    """
+    override = os.environ.get("DATASHEETS_PDF_ROOT", "").strip()
+    if override:
+        return {"pdf_root": override, "pdf_root_lfs": override, "source": "env"}
+    repo = os.environ.get("DATASHEETS_REPO", "").strip()
+    if repo and os.environ.get("DATASHEETS_REPO_PUBLIC", "").lower() in ("1", "true", "yes"):
+        raw = f"https://raw.githubusercontent.com/{repo}/{commit}/"
+        return {"pdf_root": "pdf/", "pdf_root_lfs": raw, "source": "public-raw"}
+    return {"pdf_root": "pdf/", "pdf_root_lfs": "pdf/", "source": "local"}
+
+
+def _copy_pdfs() -> tuple[int, int, int]:
+    """Copy the LFS-resolved PDFs into `site/pdf/<vendor>/<...>/<file>`.
+
+    Detects unresolved LFS pointer files and skips them so the artifact
+    doesn't ship the pointer text as `.pdf`. Returns (copied, skipped_pointer, total_bytes).
+    """
+    pdf_out = SITE_OUT / "pdf"
+    pdf_out.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    skipped_pointer = 0
+    total_bytes = 0
+
+    exclude = {".git", "site", "site-src", "_cache", "tools", "builders",
+               "tests", "node_modules", ".claude", ".venv", "venv",
+               "__pycache__", "pdf", ".github"}
+
+    for vendor_dir in sorted(REPO_ROOT.iterdir()):
+        if not vendor_dir.is_dir() or vendor_dir.name in exclude:
+            continue
+        if vendor_dir.name.startswith("."):
+            continue
+        for pdf in vendor_dir.rglob("*.pdf"):
+            rel = pdf.relative_to(REPO_ROOT)
+            if _detect_lfs_pointer(pdf):
+                print(f"[pdf skip pointer] {rel}")
+                skipped_pointer += 1
+                continue
+            dst = pdf_out / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(pdf, dst)
+            copied += 1
+            total_bytes += dst.stat().st_size
+
+    print(f"[pdf] copied {copied} PDFs ({total_bytes / 1024 / 1024:.1f} MB); "
+          f"skipped {skipped_pointer} unresolved pointer files")
+    return copied, skipped_pointer, total_bytes
+
+
+def _write_meta(commit: str, memex_sha: str, doc_count: int,
+                pdf_config: dict, pdf_stats: tuple[int, int, int]) -> Path:
+    copied, skipped_pointer, pdf_bytes = pdf_stats
     meta = {
         "commit": commit,
         "memex_sha": memex_sha,
         "built_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "doc_count": doc_count,
+        # The frontend picks pdf_root vs pdf_root_lfs based on the
+        # document's `is_lfs` flag (populated by build_index.py). See
+        # site-src/render/fmt.js.
+        "pdf_root": pdf_config["pdf_root"],
+        "pdf_root_lfs": pdf_config["pdf_root_lfs"],
+        "pdf_root_source": pdf_config["source"],
+        "pdf_shipped_count": copied,
+        "pdf_shipped_bytes": pdf_bytes,
+        "pdf_pointer_skipped_count": skipped_pointer,
     }
     dst = SITE_OUT / "_meta.json"
     dst.write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n",
@@ -148,8 +234,10 @@ def main() -> int:
     commit = _commit_sha()
     memex_sha = _memex_sha()
     doc_count = _doc_count(SITE_OUT / "index.db")
+    pdf_config = _pdf_root_config(commit)
+    pdf_stats = _copy_pdfs() if pdf_config["source"] == "local" else (0, 0, 0)
 
-    _write_meta(commit, memex_sha, doc_count)
+    _write_meta(commit, memex_sha, doc_count, pdf_config, pdf_stats)
     _write_nojekyll()
 
     print(f"\nSite assembled at {SITE_OUT}")

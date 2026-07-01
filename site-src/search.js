@@ -15,6 +15,7 @@ import { createLatestOnlySearchScheduler } from './search/scheduler.js';
 import {
   renderResults, showLoading, showIntro, showError,
 } from './render/overlay.js';
+import { configurePdfRoots } from './render/fmt.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -32,6 +33,23 @@ export async function installSearch(db) {
     status.textContent = text;
     status.className = cls;
   };
+
+  // Load `_meta.json` for the PDF root templates. The frontend's link
+  // template picks between `pdf_root` (inline / shipped) and
+  // `pdf_root_lfs` (external raw host, e.g. raw.githubusercontent.com
+  // for public repos) per-document based on the `is_lfs` bool the
+  // build writes into each `documents` row.
+  //
+  // Failing this fetch is non-fatal — pdfHref falls back to `pdf/`.
+  try {
+    const meta = await fetch('_meta.json', { cache: 'no-cache' }).then((r) => r.ok ? r.json() : null);
+    if (meta) {
+      configurePdfRoots({
+        pdf_root: meta.pdf_root,
+        pdf_root_lfs: meta.pdf_root_lfs,
+      });
+    }
+  } catch { /* keep defaults */ }
 
   setStatus('schema: loading vendor / part-number tables…');
 

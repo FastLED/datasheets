@@ -99,7 +99,7 @@ export async function scopedBodySearch(query, params) {
 
   const sql = `
     SELECT d.doc_id, d.vendor, d.product_type, d.part_number, d.canonical_kind,
-           d.path, d.filename, d.page_count, d.size_bytes,
+           d.path, d.filename, d.page_count, d.size_bytes, d.is_lfs,
            c.page_num,
            snippet(search_porter, 0, '<mark>', '</mark>', '…', 12) AS snip,
            bm25(search_porter, 1) AS rank
@@ -123,7 +123,7 @@ export async function scopedBodySearch(query, params) {
 export async function partNumberProbe(query, partPrefix, limit = 20) {
   const sql = `
     SELECT d.doc_id, d.vendor, d.product_type, d.part_number, d.canonical_kind,
-           d.path, d.filename, d.page_count, d.size_bytes
+           d.path, d.filename, d.page_count, d.size_bytes, d.is_lfs
     FROM documents d
     WHERE lower(d.part_number) LIKE lower(?)
     ORDER BY d.part_number
@@ -143,7 +143,7 @@ export async function partNumberProbe(query, partPrefix, limit = 20) {
 export async function vendorDocList(query, vendor, limit = 20) {
   const sql = `
     SELECT d.doc_id, d.vendor, d.product_type, d.part_number, d.canonical_kind,
-           d.path, d.filename, d.page_count, d.size_bytes
+           d.path, d.filename, d.page_count, d.size_bytes, d.is_lfs
     FROM documents d
     WHERE d.vendor = ?
     ORDER BY d.part_number, d.canonical_kind

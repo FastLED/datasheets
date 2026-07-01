@@ -47,7 +47,8 @@ def _build_schema(cur: sqlite3.Cursor) -> None:
             sha256           TEXT NOT NULL,
             size_bytes       INTEGER NOT NULL,
             page_count       INTEGER NOT NULL,
-            path             TEXT NOT NULL
+            path             TEXT NOT NULL,
+            is_lfs           INTEGER NOT NULL DEFAULT 0
         )
         """
     )
@@ -139,12 +140,41 @@ def main() -> int:
 
     _build_schema(cur)
 
+    # Which repo-relative paths are LFS-tracked? Use `git check-attr`
+    # with `-z` (null-separated I/O) so Windows CRLF doesn't sneak `\r`
+    # into the paths. Result tells the frontend whether to prepend
+    # `pdf_root` (shipped inline) or `pdf_root_lfs` (external LFS media
+    # host) per document.
+    import subprocess as _sp
+    lfs_paths: set[str] = set()
     records = _load_cache_records()
     print(f"loaded {len(records)} document records")
+    try:
+        stdin = ("\0".join(rec["path"] for rec in records) + "\0").encode("utf-8")
+        proc = _sp.run(
+            ["git", "check-attr", "--stdin", "-z", "filter"],
+            input=stdin,
+            capture_output=True,
+            cwd=REPO_ROOT,
+            timeout=30,
+            check=False,
+        )
+        # Output triples: path\0attr\0value\0 — parse triples via split.
+        parts = proc.stdout.split(b"\0")
+        # Last element is empty due to trailing \0.
+        for i in range(0, len(parts) - 2, 3):
+            path = parts[i].decode("utf-8", errors="replace")
+            value = parts[i + 2].decode("ascii", errors="replace")
+            if value == "lfs":
+                lfs_paths.add(path)
+        print(f"detected {len(lfs_paths)} LFS-tracked docs (of {len(records)})")
+    except (_sp.SubprocessError, FileNotFoundError) as e:
+        print(f"! git check-attr failed ({e}); assuming no LFS", file=sys.stderr)
 
     # Populate documents.
     doc_rows = []
     for rec in records:
+        is_lfs = 1 if rec["path"] in lfs_paths else 0
         doc_rows.append((
             rec["vendor"],
             rec["product_type"],
@@ -155,13 +185,14 @@ def main() -> int:
             int(rec["size_bytes"]),
             int(rec["page_count"]),
             rec["path"],
+            is_lfs,
         ))
     cur.executemany(
         """
         INSERT INTO documents (
             vendor, product_type, part_number, canonical_kind,
-            filename, sha256, size_bytes, page_count, path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            filename, sha256, size_bytes, page_count, path, is_lfs
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         doc_rows,
     )

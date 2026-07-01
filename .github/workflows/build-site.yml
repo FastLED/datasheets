@@ -42,26 +42,33 @@ jobs:
     outputs:
       page_url: ${{ steps.deploy_pages.outputs.page_url }}
     steps:
-      - name: Checkout (full history)
+      - name: Checkout (full history + LFS)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          lfs: true
 
       - name: Set up uv + Python 3.13
         uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
 
-      - name: Install pypdf (extractor runtime dep)
-        run: uv pip install --system pypdf
+      - name: Create venv + install pypdf (extractor runtime dep)
+        # Ubuntu 24.04 marks the system Python as externally managed
+        # (PEP 668). We create a dedicated venv and put its bin on
+        # PATH so every downstream step's `python` picks it up.
+        run: |
+          uv venv .venv --python 3.13
+          uv pip install --python .venv/bin/python pypdf
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Fetch memex WASM bundle
         run: python tools/fetch_memex.py
 
-      - name: Extract PDF text
-        run: python tools/extract_pdf_text.py
+      - name: Extract PDF text (parallel, 4 workers)
+        run: python tools/extract_pdf_text_parallel.py
 
-      - name: Build memex index.db
+      - name: Build memex index.db (asserts <= 40 MB budget)
         run: python tools/build_index.py
 
       - name: Build vendor prefix cache

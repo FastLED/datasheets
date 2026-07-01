@@ -152,11 +152,21 @@ def main() -> int:
     # Pragmas MUST come before the first CREATE. page_size is a
     # persistent property of the DB and can only be set on an empty DB.
     #
-    # We use `journal_mode=DELETE` (the default rollback journal) rather
-    # than WAL — the built DB is read-only from the browser's POV, and
-    # WAL leaves `.db-shm` + `.db-wal` sidecar files that we'd otherwise
-    # ship in the artifact.
-    cur.execute("PRAGMA page_size = 4096")
+    # Page size trade-offs under HTTP Range loading:
+    #   4 KB (default): fewer wasted bytes per fetch, but B-tree needs
+    #     more traversals + more round trips for FTS5 posting-list
+    #     scans on high-frequency tokens.
+    #   32 KB: fewer round trips (log_32k(N) vs log_4k(N) = ~2x smaller
+    #     B-tree), better packing, 40% faster on the slow-query cases
+    #     benchmarked in tests/test_query_perf.py. 8x bandwidth per
+    #     fetch is fine — typical queries fetch <10% of a 29 MB DB.
+    #   64 KB: another 15% speedup but 16x bandwidth per fetch.
+    #
+    # The 4 KB choice matches HTTP/2 frame size, but our latency /
+    # per-request budget dominates over bandwidth, so 32 KB wins.
+    # Must be paired with `openMemexDb(url, { maxPageSize: 32768 })`
+    # in the HTML shell — mismatch = silent corruption.
+    cur.execute("PRAGMA page_size = 32768")
     cur.execute("PRAGMA journal_mode = DELETE")
 
     _build_schema(cur)

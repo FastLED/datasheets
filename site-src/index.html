@@ -83,7 +83,9 @@
 
         setStatus('open: opening index.db over HTTP Range…');
         const dbUrl = new URL('index.db', location.href).href;
-        const { db: rawDb } = await openMemexDb(dbUrl);
+        // maxPageSize MUST match `PRAGMA page_size` in the built DB.
+        // Mismatch = silent SQLite corruption. See tools/build_index.py.
+        const { db: rawDb } = await openMemexDb(dbUrl, { maxPageSize: 32768 });
 
         // Wrap memex's promiser API in a `.query(sql, bind)` method
         // that returns rows as {colName: value} objects — the shape

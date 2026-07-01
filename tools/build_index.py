@@ -177,21 +177,34 @@ def main() -> int:
     # step with chunks rowids so the 'rebuild' command hits the right
     # source rows.
     #
-    # Two shrink passes here — the raw PDF-extracted text has enough
-    # layout whitespace + boilerplate to bloat the DB past the GitHub
-    # Pages 100 MB per-file limit:
+    # Three shrink passes here — see issue #3 for the full rationale.
+    # Hard budget is 40 MB for `site/index.db` (asserted below), which
+    # forces us to be aggressive:
     #   1. Collapse consecutive whitespace to single spaces.
     #   2. Drop pages with fewer than 100 alphanumeric characters —
     #      pure-image pages, page-number-only pages, TOC pages, etc.
+    #   3. Truncate the retained text to 300 chars per page — enough
+    #      for the section heading + first sentence of body (which is
+    #      where topic markers live on TRM pages).
     import re
     _ws = re.compile(r"\s+")
     _alnum = re.compile(r"[A-Za-z0-9]")
+    TRUNC_CHARS = 300
 
     def _shrink(text: str) -> str:
         return _ws.sub(" ", text).strip()
 
     def _keep(text: str) -> bool:
         return len(_alnum.findall(text)) >= 100
+
+    def _truncate(text: str) -> str:
+        # Truncate at word boundary if possible, so snippet() doesn't
+        # slice a token mid-way.
+        if len(text) <= TRUNC_CHARS:
+            return text
+        cut = text[:TRUNC_CHARS]
+        last_space = cut.rfind(" ")
+        return cut[:last_space] if last_space > TRUNC_CHARS - 30 else cut
 
     total_chunks = 0
     dropped_chunks = 0
@@ -205,6 +218,7 @@ def main() -> int:
             if not _keep(text):
                 dropped_chunks += 1
                 continue
+            text = _truncate(text)
             chunk_rows.append((next_rowid, doc_id, int(page["n"]), text))
             next_rowid += 1
         if chunk_rows:
@@ -236,7 +250,16 @@ def main() -> int:
     conn.close()
 
     size = DB_PATH.stat().st_size
-    print(f"wrote {DB_PATH} ({size} bytes)")
+    size_mb = size / (1024 * 1024)
+    print(f"wrote {DB_PATH} ({size} bytes, {size_mb:.1f} MB)")
+    # Hard budget per issue #3. Bloat past this = the query cost model
+    # breaks and we should not deploy — fail the build loudly.
+    MAX_MB = 40
+    if size_mb > MAX_MB:
+        raise SystemExit(
+            f"! index.db is {size_mb:.1f} MB, exceeds {MAX_MB} MB budget "
+            f"(see issue #3). Tune TRUNC_CHARS in build_index.py."
+        )
     return 0
 
 

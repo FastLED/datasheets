@@ -47,10 +47,28 @@ export const PRODUCT_TYPES = new Set([
   'soc', 'mcu', 'addressable-led', 'led-driver', 'board', 'power',
 ]);
 
+// Broad body-terms — extremely common in embedded-silicon documents.
+// When a body query is composed of ONLY these tokens (no vendor / part
+// scope), the classifier short-circuits to a "add a vendor or part"
+// no-scope hint rather than running FTS5. Otherwise a query like
+// `register` would touch tens of thousands of chunks across the corpus.
+//
+// Terms flagged after real-usage benchmarking (`tests/test_query_perf.py`)
+// — anything whose FTS5 posting list exceeds ~5000 rows without a vendor
+// filter should go here.
 export const BROAD_TERMS = new Set([
+  // Peripherals / protocols
   'dma', 'spi', 'i2c', 'uart', 'usb', 'pwm', 'adc', 'dac',
+  'i2s', 'can', 'lin', 'mmc', 'sdmmc', 'ethernet', 'sdio',
+  // Generic silicon vocabulary
   'interrupt', 'timer', 'clock', 'gpio', 'dhcp', 'flash',
-  'rom', 'ram',
+  'rom', 'ram', 'register', 'registers', 'bit', 'bits',
+  'byte', 'bytes', 'word', 'address', 'addr',
+  'read', 'write', 'reserved', 'default', 'value',
+  'enable', 'disable', 'reset', 'mode', 'status',
+  'input', 'output', 'signal', 'pin', 'pins', 'port',
+  'ports', 'set', 'clear', 'field', 'fields',
+  'chapter', 'section', 'figure', 'table',
 ]);
 
 // Canonical-kind hints — not required by the spec but useful for the

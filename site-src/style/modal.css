@@ -1,0 +1,81 @@
+/* PDF preview / metadata modal. Reused overlay shell in overlay.js. */
+
+#previewModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+#previewModal.open {
+  display: flex;
+}
+
+#previewModal .modal-body {
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 8px;
+  max-width: 960px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+}
+
+#previewModal header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+#previewModal header .title {
+  font: 600 0.95rem var(--mono);
+  color: var(--hi);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#previewModal header .close {
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.3rem;
+}
+
+#previewModal .modal-meta {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--muted);
+  font: 0.78rem var(--mono);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+}
+
+#previewModal .modal-body-content {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+  background: var(--bg-soft);
+}
+
+#previewModal .modal-empty {
+  color: var(--muted);
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}

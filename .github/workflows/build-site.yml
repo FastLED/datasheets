@@ -1,0 +1,170 @@
+name: Build site
+
+# ---------------------------------------------------------------------------
+# Builds the serverless full-text search static site and deploys it to
+# GitHub Pages, then verifies the deploy is byte-range-servable (memex
+# pitfall #1: without Accept-Encoding: identity, GH Pages gzips the .db
+# and every ranged read returns the full gzipped blob, which SQLite reads
+# as page 0 → "database disk image is malformed").
+#
+# The deploy verification is MANDATORY — if the live index.db doesn't
+# answer 206 Partial Content with a valid Content-Range for a 0-4095
+# range request, the workflow FAILS. This catches every regression of
+# the pitfall before it hits the browser.
+# ---------------------------------------------------------------------------
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Daily backstop at 04:30 UTC.
+    - cron: "30 4 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # required by actions/checkout for cache paths
+  pages: write      # for actions/deploy-pages
+  id-token: write   # for actions/deploy-pages (OIDC)
+
+concurrency:
+  group: build-site
+  cancel-in-progress: false
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Job 1: build + deploy
+  # -------------------------------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy_pages.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deploy_pages.outputs.page_url }}
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv + Python 3.13
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.13"
+
+      - name: Install pypdf (extractor runtime dep)
+        run: uv pip install --system pypdf
+
+      - name: Fetch memex WASM bundle
+        run: python tools/fetch_memex.py
+
+      - name: Extract PDF text
+        run: python tools/extract_pdf_text.py
+
+      - name: Build memex index.db
+        run: python tools/build_index.py
+
+      - name: Build vendor prefix cache
+        run: python tools/build_vendor_cache.py
+
+      - name: Assemble site/ directory
+        run: python tools/build_site.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deploy_pages
+        uses: actions/deploy-pages@v4
+
+      - name: Print deploy URL
+        run: |
+          echo "Deployed to: ${{ steps.deploy_pages.outputs.page_url }}"
+
+  # -------------------------------------------------------------------------
+  # Job 2: post-deploy verification. Runs the same range-request check as
+  # tests/test_deploy_verification.py, but at the CDN edge, right after
+  # deploy. This is the gate that catches memex pitfall #1 (gzipped .db)
+  # BEFORE anyone loads the browser page.
+  # -------------------------------------------------------------------------
+  verify:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Pages propagation (up to 90 s)
+        run: |
+          set -eu
+          URL="https://fastled.github.io/datasheets/_meta.json"
+          echo "Polling ${URL} for propagation..."
+          for i in $(seq 1 30); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' -I "${URL}" || echo 000)
+            echo "  attempt ${i}: HTTP ${code}"
+            if [ "${code}" = "200" ]; then
+              echo "Pages is live."
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::Pages did not respond 200 on ${URL} within 90 s"
+          exit 1
+
+      - name: Byte-range probe on index.db
+        run: |
+          set -eu
+          URL="https://fastled.github.io/datasheets/index.db"
+          echo "Requesting bytes 0-4095 of ${URL} with Accept-Encoding: identity..."
+          curl -sS \
+               -o /tmp/db_range.bin \
+               -D /tmp/db_headers.txt \
+               -r 0-4095 \
+               -H "Accept-Encoding: identity" \
+               "${URL}"
+          echo "--- response headers ---"
+          cat /tmp/db_headers.txt
+          echo "------------------------"
+
+      - name: Verify 206 Partial Content
+        run: |
+          set -eu
+          if ! grep -qi "^HTTP/[0-9.]* 206" /tmp/db_headers.txt \
+             && ! grep -q "206 Partial Content" /tmp/db_headers.txt; then
+            echo "::error::index.db did not return 206 Partial Content"
+            echo "This means either Accept-Encoding: identity was ignored,"
+            echo "or the CDN is serving a gzipped copy. See memex IMPLEMENT.md"
+            echo "pitfall #1."
+            exit 1
+          fi
+          echo "OK: 206 Partial Content confirmed."
+
+      - name: Verify Content-Range header
+        run: |
+          set -eu
+          if ! grep -qiE "^Content-Range: bytes 0-4095/[0-9]+" /tmp/db_headers.txt; then
+            echo "::error::Missing or malformed Content-Range header"
+            grep -i "^Content-Range" /tmp/db_headers.txt || true
+            exit 1
+          fi
+          echo "OK: Content-Range header valid."
+
+      - name: Verify SQLite magic (bytes 0..3 == 'SQLi')
+        run: |
+          set -eu
+          # SQLite format 3 header starts with the ASCII "SQLite format 3\0".
+          # First 4 bytes in hex: 5351 4c69 ("SQLi").
+          head -c 4 /tmp/db_range.bin | xxd | tee /tmp/db_magic.txt
+          if ! grep -q "5351 4c69" /tmp/db_magic.txt; then
+            echo "::error::index.db first 4 bytes are NOT 'SQLi'"
+            echo "The DB is corrupt or was served gzipped despite headers."
+            exit 1
+          fi
+          echo "OK: SQLite magic confirmed."
+
+      - name: Deploy verification passed
+        run: |
+          echo "index.db is byte-range servable with correct SQLite header."
+          echo "Deployed URL: ${{ needs.build.outputs.page_url }}"

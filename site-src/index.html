@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FastLED Datasheets — Search</title>
+
+  <link rel="stylesheet" href="style/base.css" />
+  <link rel="stylesheet" href="style/search.css" />
+  <link rel="stylesheet" href="style/result-row.css" />
+  <link rel="stylesheet" href="style/modal.css" />
+  <link rel="stylesheet" href="style/help.css" />
+
+  <!--
+    IMPORTANT: NEVER add `<link rel="preload" href="index.db">` here.
+    GH Pages will gzip a preloaded octet-stream request and every
+    subsequent Range read gets the cached gzip. See memex IMPLEMENT.md.
+    Preloading `_meta.json` is fine (small JSON).
+  -->
+  <link rel="preload" href="_meta.json" as="fetch" crossorigin="anonymous" />
+</head>
+<body>
+  <div class="wrap">
+    <h1>FastLED Datasheets</h1>
+    <p class="sub">
+      Full-text search over the vendor datasheets, technical reference
+      manuals, errata, and application notes that FastLED targets.
+      Static site, in-browser SQLite, no server.
+    </p>
+
+    <div class="row search-row">
+      <label class="uni">
+        Query
+        <input id="uniIn" type="text" autocomplete="off" autofocus
+               placeholder="esp dma, stm32h7 sdmmc, nrf52 errata…" />
+      </label>
+      <label class="vendor-filter">
+        Vendor
+        <select id="vendorFilterIn" autocomplete="off">
+          <option value="" selected>All vendors</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="dbStatus">boot: probing…</div>
+    <div id="results"></div>
+
+    <!-- PDF preview modal shell. Populated on demand by modal/pdf-preview.js. -->
+    <div id="previewModal" role="dialog" aria-modal="true" aria-hidden="true"></div>
+
+    <footer>
+      <p>
+        Datasheets are vendor-owned; this site indexes public PDFs for
+        FastLED contributor reference only. See
+        <a href="https://github.com/FastLED/datasheets">FastLED/datasheets</a>
+        for the source layout.
+      </p>
+    </footer>
+  </div>
+
+  <script type="module">
+    // Direct ES module boot — no bundler.
+    //
+    // `openMemexDb()` sends `Accept-Encoding: identity` for every DB
+    // fetch. The wrapper handles Range: header retries and page-size
+    // negotiation; we just await it and hand the resulting `db` to our
+    // top-level `installSearch()`.
+    import { openMemexDb } from './vendor/memex.js';
+    import { installSearch } from './search.js';
+
+    const status = document.getElementById('dbStatus');
+    const setStatus = (text, cls = '') => {
+      status.textContent = text;
+      status.className = cls || '';
+    };
+
+    async function boot() {
+      try {
+        setStatus('probe: fetching _meta.json…');
+        const metaPromise = fetch('_meta.json', { cache: 'no-cache' })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+
+        setStatus('open: opening index.db over HTTP Range…');
+        const dbUrl = new URL('index.db', location.href).href;
+        const { db: rawDb } = await openMemexDb(dbUrl);
+
+        // Wrap memex's promiser API in a `.query(sql, bind)` method
+        // that returns rows as {colName: value} objects — the shape
+        // search.js expects. Memex's own IMPLEMENT.md shows the exec
+        // callback pattern; we zip columnNames + row arrays here.
+        const db = {
+          raw: rawDb,
+          async query(sql, bind) {
+            let columns = null;
+            const rows = [];
+            await rawDb('exec', {
+              sql,
+              bind: bind || [],
+              callback: (msg) => {
+                if (msg.columnNames && !columns) {
+                  columns = msg.columnNames.slice();
+                }
+                if (msg.row) {
+                  if (!columns) columns = (msg.columnNames || []).slice();
+                  const obj = {};
+                  for (let i = 0; i < columns.length; i++) {
+                    obj[columns[i]] = msg.row[i];
+                  }
+                  rows.push(obj);
+                }
+              },
+            });
+            return rows;
+          },
+        };
+
+        setStatus('schema: initializing search…');
+        // Preload meta in the background — we don't block on it.
+        metaPromise.then((m) => {
+          if (m && m.commit) {
+            const footer = document.querySelector('footer');
+            if (footer) {
+              const span = document.createElement('div');
+              span.className = 'stat';
+              span.textContent = `commit ${String(m.commit).slice(0, 7)} · built ${m.built || 'unknown'}`;
+              footer.appendChild(span);
+            }
+          }
+        }).catch(() => {});
+
+        await installSearch(db);
+        // installSearch sets 'ready' status once tables are cached.
+      } catch (err) {
+        console.error(err);
+        setStatus(`failed: ${err && err.message || String(err)}`, 'err');
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

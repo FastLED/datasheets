@@ -1,0 +1,10 @@
+# Search build artifacts
+_cache/
+site/
+site-src/vendor/memex*.js
+site-src/vendor/sqlite3.wasm
+site-src/index.db
+.playwright_*.py
+.pw_*.py
+.hunt_*
+.issue_*.md

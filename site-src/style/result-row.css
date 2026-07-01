@@ -1,0 +1,118 @@
+/* A single result row: document header + per-page snippets. */
+
+.result-row {
+  padding: 0.6rem 0.75rem;
+  margin: 0.4rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.result-row:hover {
+  background: var(--hi-bg);
+  border-color: color-mix(in srgb, var(--hi) 35%, var(--border));
+}
+
+.result-row.vendor-hit {
+  border-color: var(--hi);
+  background: var(--hi-bg);
+}
+
+.result-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.result-part {
+  font: 600 0.98rem var(--mono);
+  color: var(--hi);
+}
+
+.result-kind {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--fg);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.result-meta {
+  color: var(--muted);
+  font-size: 0.76rem;
+  display: inline-flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.result-path {
+  font: 0.76rem var(--mono);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  margin-top: 0.15rem;
+}
+
+.result-path a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.result-path a:hover {
+  color: var(--hi);
+  text-decoration: underline;
+}
+
+.page-hits {
+  margin: 0.5rem 0 0.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.page-hit {
+  padding: 0.35rem 0.5rem;
+  border-left: 3px solid color-mix(in srgb, var(--hi) 40%, transparent);
+  background: var(--bg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.page-hit-num {
+  font: 0.72rem var(--mono);
+  color: var(--muted);
+  margin-right: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.page-hit-num a {
+  color: var(--hi);
+  text-decoration: none;
+}
+
+.page-hit-num a:hover {
+  text-decoration: underline;
+}
+
+.page-hit-snippet {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.more-pages {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}

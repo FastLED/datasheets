@@ -58,10 +58,23 @@ def _build_schema(cur: sqlite3.Cursor) -> None:
     cur.execute("CREATE INDEX idx_documents_kind ON documents(canonical_kind)")
 
     # chunks — external content source for the FTS5 tables.
+    #
+    # Vendor is denormalized onto every chunk so it can be indexed by
+    # FTS5 as a filter column. Without this, `esp dma` becomes:
+    #   1. FTS5 matches 'dma' across ALL 58 k chunks in the corpus
+    #   2. JOIN chunks → JOIN documents to reach vendor
+    #   3. Filter to vendor='espressif' AFTER scoring
+    # Under HTTP-range loading that pattern touches ~thousands of
+    # unique B-tree pages before the vendor filter kicks in. Making
+    # vendor a first-class FTS5 column lets the MATCH string be
+    # `vendor:espressif AND dma` — FTS5 intersects the two posting
+    # lists before scoring, and typical response drops from seconds
+    # to ~150 ms.
     cur.execute(
         """
         CREATE TABLE chunks (
             doc_id     INTEGER NOT NULL,
+            vendor     TEXT NOT NULL,
             page_num   INTEGER NOT NULL,
             text       TEXT NOT NULL,
             FOREIGN KEY (doc_id) REFERENCES documents(doc_id)
@@ -69,13 +82,21 @@ def _build_schema(cur: sqlite3.Cursor) -> None:
         """
     )
     cur.execute("CREATE INDEX idx_chunks_doc ON chunks(doc_id)")
+    cur.execute("CREATE INDEX idx_chunks_vendor ON chunks(vendor)")
 
     # FTS5 tables — external content (`content='chunks'`) means the FTS
     # tables reference chunks by rowid rather than duplicating the text.
+    #
+    # `vendor` is an indexed FTS5 column so queries can use the
+    # `vendor:<slug> AND <body>` column-filter pattern for fast scoped
+    # search. `columnsize=0` skips storing per-column doc lengths (we
+    # don't need snippet() / bm25() to be column-aware — text is the
+    # only column snippet() gets called on).
     cur.execute(
         """
         CREATE VIRTUAL TABLE search_porter USING fts5(
             text,
+            vendor,
             content='chunks', content_rowid='rowid',
             tokenize='porter unicode61 remove_diacritics 1',
             columnsize=0
@@ -243,6 +264,7 @@ def main() -> int:
     for rec in records:
         key = (rec["vendor"], rec["product_type"], rec["part_number"], rec["canonical_kind"])
         doc_id = id_map[key]
+        vendor = rec["vendor"]
         chunk_rows = []
         for page in rec.get("pages", []):
             text = _shrink(page.get("text") or "")
@@ -250,11 +272,11 @@ def main() -> int:
                 dropped_chunks += 1
                 continue
             text = _truncate(text)
-            chunk_rows.append((next_rowid, doc_id, int(page["n"]), text))
+            chunk_rows.append((next_rowid, doc_id, vendor, int(page["n"]), text))
             next_rowid += 1
         if chunk_rows:
             cur.executemany(
-                "INSERT INTO chunks(rowid, doc_id, page_num, text) VALUES (?, ?, ?, ?)",
+                "INSERT INTO chunks(rowid, doc_id, vendor, page_num, text) VALUES (?, ?, ?, ?, ?)",
                 chunk_rows,
             )
             total_chunks += len(chunk_rows)

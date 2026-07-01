@@ -77,15 +77,25 @@ export async function scopedBodySearch(query, params) {
     limit = 60,
   } = params;
 
+  // Compose the MATCH string with vendor as an FTS5 column filter.
+  // FTS5 syntax: `column:token` restricts a token to a column. AND is
+  // implicit between space-separated tokens. Vendor column-filtering
+  // intersects posting lists at index-scan time, so `esp dma` no
+  // longer has to touch every DMA-mentioning chunk before deciding
+  // vendor.
+  //
+  // Non-scoped body-only queries just use `match` as-is (no vendor
+  // filter).
+  const matchParts = [];
+  if (vendor) matchParts.push(`vendor:${vendor}`);
+  if (match) matchParts.push(`(${match})`);
+  if (!matchParts.length && !part_prefix && !product_type) return [];
+
   const filters = [];
   const binds = [];
-  if (match) {
+  if (matchParts.length) {
     filters.push('search_porter MATCH ?');
-    binds.push(match);
-  }
-  if (vendor) {
-    filters.push('d.vendor = ?');
-    binds.push(vendor);
+    binds.push(matchParts.join(' AND '));
   }
   if (part_prefix) {
     filters.push('lower(d.part_number) LIKE lower(?)');
@@ -95,7 +105,6 @@ export async function scopedBodySearch(query, params) {
     filters.push('d.product_type = ?');
     binds.push(product_type);
   }
-  if (!filters.length) return [];
 
   const sql = `
     SELECT d.doc_id, d.vendor, d.product_type, d.part_number, d.canonical_kind,

@@ -8,3 +8,4 @@ site-src/index.db
 .pw_*.py
 .hunt_*
 .issue_*.md
+.extern-repos/

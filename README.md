@@ -77,6 +77,7 @@ pjrc/
 | `espressif` | Espressif Systems (ESP32 family, ESP8266) |
 | `nxp` | NXP Semiconductors (LPC, Kinetis K/KL, i.MX RT) |
 | `stmicroelectronics` | STMicroelectronics (STM32) |
+| `wch` | Nanjing Qinheng Microelectronics / WinChipHead (CH32 family) |
 | `nordic` | Nordic Semiconductor (nRF51/nRF52) |
 | `raspberrypi` | Raspberry Pi Ltd (RP2040, RP2350) |
 | `microchip` | Microchip / Atmel (AVR ATmega/ATtiny, SAMD, SAM3X) |
@@ -145,6 +146,7 @@ path from repo root, e.g.:
 - `worldsemi/addressable-led/WS2812B/datasheet.pdf`
 - `nxp/mcu/LPC845/user-manual.pdf#page=214` (page anchors are supported by
   most PDF renderers when the file is served through the GitHub UI).
+- `wch/mcu/CH32V003/technical-reference-manual.pdf`
 
 Do NOT copy PDFs into the main repo. Link to them here instead.
 

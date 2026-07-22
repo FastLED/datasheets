@@ -13,6 +13,7 @@ and agents.
 
 - **Vendor** — lowercase slug (`worldsemi`, `espressif`, `nxp`,
   `stmicroelectronics`, `nordic`, `raspberrypi`, `microchip`,
+  `wch` for Nanjing Qinheng Microelectronics / WinChipHead,
   `siliconlabs`, `renesas`, `pjrc`, `arduino`, `gigadevice`, `ambiq`,
   `normand`, `apa`, `hdchips`, `titanmicro`, `newstar`, `sunmoon`,
   `ucs`, `genesisstar`). See the vendor table in `README.md`.
@@ -29,6 +30,7 @@ and agents.
 - `espressif/soc/ESP32-C6/errata.pdf`
 - `nxp/mcu/LPC845/user-manual.pdf`
 - `raspberrypi/mcu/RP2040/datasheet.pdf`
+- `wch/mcu/CH32V003/technical-reference-manual.pdf`
 
 ## Rules for agents
 

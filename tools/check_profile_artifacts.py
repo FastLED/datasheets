@@ -18,6 +18,7 @@ ID = re.compile(r"^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]
 QUALIFIERS = {"min", "typical", "max", "measured", "inferred"}
 FIVE_BIT = {"secondary_slow_pwm", "current_gain", "unknown", "not_applicable"}
 OBSERVATION_FIELDS = {"dominant_wavelength_nm", "luminous_intensity_mcd", "relative_y", "forward_voltage_v", "current_ma", "idle_power"}
+RANGE_FIELDS = {"dominant_wavelength_nm_range", "luminous_intensity_mcd_range"}
 
 
 def _validate_observation(observation: object, name: str, errors: list[str]) -> None:
@@ -40,6 +41,10 @@ def _finite_errors(value: object, path: str) -> list[str]:
         return [error for index, child in enumerate(value)
                 for error in _finite_errors(child, f"{path}[{index}]")]
     return []
+
+
+def _inside_xy_simplex(x: float, y: float) -> bool:
+    return x >= 0 and y >= 0 and x + y <= 1
 
 
 def validate(profile: dict, name: str) -> list[str]:
@@ -116,6 +121,27 @@ def validate_artifact(profile: object, name: str) -> list[str]:
     if errors:
         return errors
     errors = validate(profile, name)
+    for channel in profile["photometric"]["channels"]:
+        for field in RANGE_FIELDS:
+            if field not in channel:
+                continue
+            observations = channel[field]
+            values: list[float] = []
+            for key in ("min", "typical", "max"):
+                if key not in observations:
+                    continue
+                observation = observations[key]
+                if observation["qualifier"] != key:
+                    errors.append(f"{name}: range key {key} must match qualifier")
+                values.append(observation["value"])
+            if values != sorted(values):
+                errors.append(f"{name}: range observations must satisfy min <= typical <= max")
+    full_drive_white = profile["photometric"].get("full_drive_white_chromaticity")
+    if full_drive_white is not None:
+        x = full_drive_white["x"]["value"]
+        y = full_drive_white["y"]["value"]
+        if not _inside_xy_simplex(x, y):
+            errors.append(f"{name}: full-drive white chromaticity must be inside the CIE xy simplex")
     if profile.get("runtime_admissible", False):
         expected = {
             "rgb": {"red", "green", "blue"},
@@ -126,6 +152,16 @@ def validate_artifact(profile: object, name: str) -> list[str]:
         actual = {channel["name"] for channel in channels}
         if expected is None or actual != expected or len(channels) != len(actual) or not all(channel["runtime_admissible"] for channel in channels):
             errors.append(f"{name}: runtime admission requires a complete declared channel set with usable xy/Y")
+        for channel in channels:
+            if not channel["runtime_admissible"]:
+                continue
+            chromaticity = channel["chromaticity"]
+            x = chromaticity["x"]["value"]
+            y = chromaticity["y"]["value"]
+            if not _inside_xy_simplex(x, y):
+                errors.append(f"{name}: runtime chromaticity must be inside the CIE xy simplex")
+            if channel["relative_y"]["value"] <= 0:
+                errors.append(f"{name}: runtime relative_y must be positive")
     return errors
 
 
@@ -147,7 +183,15 @@ def parse_artifact(text: str) -> object:
     def reject_constant(value: str) -> None:
         raise ValueError(f"non-JSON numeric constant: {value}")
 
-    return json.loads(text, parse_constant=reject_constant)
+    def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        parsed: dict[str, object] = {}
+        for key, value in pairs:
+            if key in parsed:
+                raise ValueError(f"duplicate JSON object key: {key}")
+            parsed[key] = value
+        return parsed
+
+    return json.loads(text, parse_constant=reject_constant, object_pairs_hook=reject_duplicate_keys)
 
 
 def main() -> int:

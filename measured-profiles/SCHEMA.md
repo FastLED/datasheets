@@ -35,6 +35,13 @@ PDF transcription as measured.
 
 Each `photometric.channels` entry has `name` and may provide `chromaticity`,
 `relative_y`, `dominant_wavelength_nm`, `luminous_intensity_mcd`, and `response`.
+When a datasheet gives a min/typical/max LED table, the corresponding
+`*_range` field preserves those observations rather than inventing a midpoint.
+Each present range key must match its observation qualifier, and supplied values
+must be ordered `min <= typical <= max`; an absent bound remains unknown.
+`photometric.full_drive_white_chromaticity` records an explicitly combined
+full-drive white coordinate; it is never a substitute for an individual diode's
+`chromaticity`, but must still lie inside the CIE xy simplex.
 Each numeric observation is an object with `value`, optional `unit`,
 `qualifier`, and `source`.  The only qualifiers are `min`, `typical`, `max`,
 `measured`, and `inferred`.  `source` names a repository-relative document,

@@ -45,6 +45,19 @@
       }
     },
     {
+      "part": "WS2816B-2121 typical",
+      "intensity_mcd": [
+        285,
+        530,
+        90
+      ],
+      "max_min": {
+        "uncorrected": 5.89,
+        "typical_led_strip": 4.32,
+        "typical_8mm_pixel": 9.42
+      }
+    },
+    {
       "part": "WS2813A",
       "intensity_mcd": [
         480,

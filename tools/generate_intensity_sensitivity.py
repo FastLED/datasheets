@@ -10,6 +10,7 @@ OUTPUT = ROOT / "measured-profiles" / "intensity-sensitivity-v1.json"
 REPORT = ROOT / "measured-profiles" / "P1-CHARACTERIZATION.md"
 ROWS = {
     "SK6812 midpoint": (850, 1850, 850), "WS2812B midpoint": (405, 690, 190),
+    "WS2816B-2121 typical": (285, 530, 90),
     "WS2813A": (480, 1500, 320), "WS2813B / WS2815 central": (360, 1150, 220),
     "WS2813C": (120, 540, 130), "WS2813D": (100, 420, 110),
     "GS8208 LED5050 option": (450, 1300, 280),

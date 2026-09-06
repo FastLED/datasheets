@@ -31,6 +31,6 @@
     {"part":"WS2812B","vendor":"worldsemi","classification":"fixed_package_integrated_led","evidence_status":"source_pdf_fetched"},
     {"part":"WS2813","vendor":"worldsemi","classification":"fixed_package_integrated_led","evidence_status":"source_pdf_fetched"},
     {"part":"WS2815","vendor":"worldsemi","classification":"fixed_package_integrated_led","evidence_status":"source_pdf_fetched"},
-    {"part":"WS2816","vendor":"worldsemi","classification":"fixed_package_integrated_led","evidence_status":"pdf_payload_unavailable"}
+    {"part":"WS2816","vendor":"worldsemi","classification":"fixed_package_integrated_led","evidence_status":"source_pdf_recovered_and_page4_transcribed"}
   ]
 }

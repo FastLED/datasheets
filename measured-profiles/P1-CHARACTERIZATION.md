@@ -16,17 +16,22 @@ silent coverage hole.
 
 The checkout's PDFs are Git-LFS pointers and `git lfs` is unavailable. Source
 URLs from `SOURCES.md` were fetched only into an untracked temporary directory:
-nine of the ten integrated parts were retrievable and WS2816 returned HTTP 403.
-The checked-in WS2812B artifact demonstrates page/table-scoped transcription.
-No downloaded PDF is checked in or redistributed. The remaining catalog fields
-are unknown until similarly transcribed with a corpus path, PDF page, section.
+all ten integrated parts are now retrievable. The original WS2816 mirror returned
+HTTP 403, but Worldsemi's primary WS2816B-2121 link yielded a payload whose
+SHA-256 `4f6f09172b7b723abf0280b047417ba239a3755c6552aac1198fed074d44fa1d`
+matches `worldsemi/addressable-led/WS2816/datasheet.pdf`'s LFS pointer. The
+checked-in WS2812B and WS2816B-2121 artifacts demonstrate page/table-scoped
+transcription. No downloaded PDF is checked in or redistributed. The remaining
+catalog fields are unknown until similarly transcribed with a corpus path, PDF
+page, section.
 
 ## What can and cannot be quantified now
 
 No admitted artifact currently contains extracted CIE xy or a calibrated spectral
 power distribution usable for xy/relative-Y conversion. This is not proof that
-the corpus lacks usable spectra: SK9822 plots have not been digitized and the
-WS2816 payload has not yet been inspected. A neutral,
+the corpus lacks usable spectra: SK9822 plots have not been digitized. WS2816B-
+2121 supplies a combined-white xy value, but no individual-diode xy or spectral
+distribution. A neutral,
 primary, secondary, luminance, or ΔE2000 comparison requires each emitter's xy
 and relative radiometric/photometric scale; a luminous-intensity RGB ratio
 alone cannot establish ΔE2000.  Consequently there are **zero admissible
@@ -84,7 +89,7 @@ claim. `—` means no usable table value; `I` is photopic luminous intensity
 | WS2812B | 3 | 620–625 / 522–525 / 465–467 | 390–420 / 660–720 / 180–200 | V 2.0–2.2 / 3.0–3.4 / 3.0–3.4; current absent | RGB8 PWM; no bin/response curve |
 | WS2813 A/B/C/D | 5 | 620–622 / 522–525 / 467–470 | A 480/1500/320; B 360/1150/220; C 120/540/130; D 100/420/110 | 18/18/5/5 mA respectively | RGB8 PWM; variants, not a bin population |
 | WS2815 | 3 | 620–625 / 515–525 / 465–475 | central 360/1150/220 | 15 mA/channel; 2.1 mA quiescent | RGB8 PWM; TA −20–70 °C but no thermal color curve/bin range |
-| WS2816 | unavailable | — | — | primary source HTTP 403 | excluded pending primary access |
+| WS2816B-2121 | 4 | 620–625 / 522–527 / 470–475 | 210/285/360 / 420/530/720 / 70/90/120 | VDD=5 V; 16-bit RGB | primary URL [Worldsemi WS2816B-2121 v1.1](https://www.world-semi.com/web/userfiles/productfile/WS2816B_2121Datasheet_EN_V1.1.pdf); combined-white x=.32/y=.33 (not diode xy), no spectral/bin uncertainty |
 
 GS8208 is driver-only at the IC level, but its PDF page 8 gives an LED5050
 package option at IF=10 mA (615–630/520–535/460–475 nm; 450/1300/280 mcd).
@@ -104,13 +109,14 @@ and 8 mm `(1,224/255,140/255)`.
 | --- | ---: | ---: | ---: | ---: |
 | SK6812 midpoint | 2.18 | 1.60 | 3.48 | 1.00 |
 | WS2812B midpoint | 3.63 | 2.66 | 5.81 | 1.00 |
+| WS2816B-2121 typical | 5.89 | 4.32 | 9.42 | 1.00 |
 | WS2813A | 4.69 | 3.44 | 7.50 | 1.00 |
 | WS2813B / WS2815 central | 5.23 | 3.83 | 8.36 | 1.00 |
 | WS2813C | 4.50 | 3.11 | 6.65 | 1.00 |
 | WS2813D | 4.20 | 2.90 | 6.11 | 1.00 |
 | GS8208 LED5050 option | 4.64 | 3.40 | 7.43 | 1.00 |
 
-This covers 7 documented rows, not five cherry-picked rows. The spread rejects
+This covers 8 documented rows, not five cherry-picked rows. The spread rejects
 a one-profile clustering conclusion: values vary by package/current/variant,
 and PDFs supply no common bin population or uncertainty, so no quantitative
 cluster confidence is defensible.

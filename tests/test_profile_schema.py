@@ -38,6 +38,51 @@ class ProfileSchemaTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 CHECK.parse_artifact('{"value": ' + literal + '}')
 
+    def test_json_loader_rejects_duplicate_keys_at_every_depth(self) -> None:
+        for text in ('{"schema_version":"1.0","schema_version":"1.0"}', '{"provenance":{"kind":"datasheet_derived","kind":"measured"}}'):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(ValueError, "duplicate JSON object key"):
+                    CHECK.parse_artifact(text)
+
+    def test_runtime_admission_requires_xy_simplex_and_positive_relative_y(self) -> None:
+        value = profile()
+        value["chip_encoding"]["native_code_depth"] = 8
+        value["runtime_admissible"] = True
+        value["topology"] = "rgb"
+        source = {"path": "x.pdf", "page": 1, "section": "x"}
+        value["photometric"]["channels"] = [
+            {"name": name, "runtime_admissible": True,
+             "chromaticity": {"x": {"value": x, "qualifier": "measured", "source": source}, "y": {"value": y, "qualifier": "measured", "source": source}},
+             "relative_y": {"value": relative_y, "qualifier": "measured", "source": source}}
+            for name, x, y, relative_y in (("red", -0.1, 0.4, 1.0), ("green", 0.7, 0.4, 1.0), ("blue", 0.2, 0.3, 0.0))
+        ]
+        errors = " ".join(CHECK.validate_artifact(value, "fixture"))
+        self.assertIn("chromaticity must be inside the CIE xy simplex", errors)
+        self.assertIn("relative_y must be positive", errors)
+
+    def test_range_observations_require_matching_qualifiers_and_order(self) -> None:
+        value = profile()
+        value["chip_encoding"]["native_code_depth"] = 8
+        source = {"path": "x.pdf", "page": 1, "section": "x"}
+        value["photometric"]["channels"][0]["luminous_intensity_mcd_range"] = {
+            "min": {"value": 3, "qualifier": "max", "source": source},
+            "typical": {"value": 1, "qualifier": "typical", "source": source},
+            "max": {"value": 2, "qualifier": "max", "source": source},
+        }
+        errors = " ".join(CHECK.validate_artifact(value, "fixture"))
+        self.assertIn("range key min must match qualifier", errors)
+        self.assertIn("range observations must satisfy min <= typical <= max", errors)
+
+    def test_full_drive_white_chromaticity_requires_xy_simplex(self) -> None:
+        value = profile()
+        value["chip_encoding"]["native_code_depth"] = 8
+        source = {"path": "x.pdf", "page": 1, "section": "x"}
+        value["photometric"]["full_drive_white_chromaticity"] = {
+            "x": {"value": 0.8, "qualifier": "typical", "source": source},
+            "y": {"value": 0.3, "qualifier": "typical", "source": source},
+        }
+        self.assertIn("full-drive white chromaticity must be inside the CIE xy simplex", " ".join(CHECK.validate_artifact(value, "fixture")))
+
     def test_admission_combines_schema_and_identity_invariants(self) -> None:
         value = profile()
         value["chip_encoding"]["native_code_depth"] = 8
@@ -116,8 +161,22 @@ class ProfileSchemaTest(unittest.TestCase):
 
     def test_checked_in_artifact_is_json_schema_valid(self) -> None:
         schema = json.loads((Path(__file__).parents[1] / "measured-profiles" / "schema-v1.json").read_text())
-        artifact = json.loads((Path(__file__).parents[1] / "measured-profiles" / "ws2812b-5050-none-datasheet-r1.profile.json").read_text())
-        self.assertEqual(list(Draft202012Validator(schema).iter_errors(artifact)), [])
+        artifacts = sorted((Path(__file__).parents[1] / "measured-profiles").glob("*.profile.json"))
+        self.assertGreaterEqual(len(artifacts), 2)
+        for path in artifacts:
+            with self.subTest(path=path.name):
+                artifact = json.loads(path.read_text())
+                self.assertEqual(list(Draft202012Validator(schema).iter_errors(artifact)), [])
+
+    def test_ws2816_combined_white_is_not_a_diode_chromaticity(self) -> None:
+        artifact_path = Path(__file__).parents[1] / "measured-profiles" / "ws2816b-2121-none-datasheet-r1.profile.json"
+        artifact = json.loads(artifact_path.read_text())
+        photometric = artifact["photometric"]
+        self.assertIn("full_drive_white_chromaticity", photometric)
+        self.assertTrue(all("chromaticity" not in channel for channel in photometric["channels"]))
+        self.assertEqual(photometric["channels"][0]["dominant_wavelength_nm_range"]["min"]["value"], 620)
+        self.assertEqual(set(photometric["channels"][0]["luminous_intensity_mcd_range"]), {"min", "typical", "max"})
+        self.assertEqual(CHECK.validate_artifact(artifact, artifact_path.name), [])
 
     def test_duplicate_profile_id_is_rejected(self) -> None:
         self.assertIn("duplicate append-only profile_id", " ".join(CHECK.validate_registry([(profile(), "one"), (profile(), "two")])))

@@ -29,9 +29,10 @@ page, section.
 
 No admitted artifact currently contains extracted CIE xy or a calibrated spectral
 power distribution usable for xy/relative-Y conversion. This is not proof that
-the corpus lacks usable spectra: SK9822 plots have not been digitized. WS2816B-
-2121 supplies a combined-white xy value, but no individual-diode xy or spectral
-distribution. A neutral,
+the corpus lacks usable spectra: SK9822 page-7 curves have been digitized into
+explicitly graph-limited diode xy estimates, but provide no inter-channel flux
+or manufacturer/bin uncertainty. WS2816B-2121 supplies a combined-white xy
+value, but no individual-diode xy or spectral distribution. A neutral,
 primary, secondary, luminance, or ΔE2000 comparison requires each emitter's xy
 and relative radiometric/photometric scale; a luminous-intensity RGB ratio
 alone cannot establish ΔE2000.  Consequently there are **zero admissible
@@ -84,7 +85,7 @@ claim. `—` means no usable table value; `I` is photopic luminous intensity
 | HD107 | 2–3 | — | — | 20 mA maximum, VDD 5.0 typical | RGB8 + 5-bit current scale, PWM >26 kHz; no emitter data |
 | HD108 | 2–3 | — | — | 17 mA typical/20 mA max | RGB16 + per-channel 5-bit current scale, PWM 28 kHz; 0–70 °C only |
 | SK6812 | 5 | 620–625 / 522.5–525 / 467.5–470 | 700–1000 / 1500–2200 / 700–1000 | V 2.0–2.2 / 3.0–3.3 / 3.0–3.3; current absent | RGB8 PWM; no bin/response curve |
-| SK9822 | 4, 7 | graph only | graph only | 20 mA max, VDD 5.0 typical | RGB8 + 5-bit current scale; response/spectrum/thermal plots not digitized, no uncertainty |
+| SK9822 | 4, 7 | graph digitized | graph only | 20 mA max, VDD 5.0 typical | RGB8 + 5-bit current scale; [page-7 relative SPD CSV](spectra/SK9822-REV01-P7.md) gives graph-limited diode xy estimates only—no relative channel Y, flux, bin, or manufacturer uncertainty |
 | WS2812 | retrieved | — | — | — | RGB8 PWM; no extractable LED table |
 | WS2812B | 3 | 620–625 / 522–525 / 465–467 | 390–420 / 660–720 / 180–200 | V 2.0–2.2 / 3.0–3.4 / 3.0–3.4; current absent | RGB8 PWM; no bin/response curve |
 | WS2813 A/B/C/D | 5 | 620–622 / 522–525 / 467–470 | A 480/1500/320; B 360/1150/220; C 120/540/130; D 100/420/110 | 18/18/5/5 mA respectively | RGB8 PWM; variants, not a bin population |

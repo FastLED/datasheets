@@ -1,0 +1,126 @@
+{
+  "kind": "photopic_intensity_neutral_sensitivity_not_color_accuracy",
+  "models": {
+    "uncorrected": [
+      1,
+      1,
+      1
+    ],
+    "typical_led_strip": [
+      1,
+      0.6901960784313725,
+      0.9411764705882353
+    ],
+    "typical_8mm_pixel": [
+      1,
+      0.8784313725490196,
+      0.5490196078431373
+    ]
+  },
+  "rows": [
+    {
+      "part": "SK6812 midpoint",
+      "intensity_mcd": [
+        850,
+        1850,
+        850
+      ],
+      "max_min": {
+        "uncorrected": 2.18,
+        "typical_led_strip": 1.6,
+        "typical_8mm_pixel": 3.48
+      }
+    },
+    {
+      "part": "WS2812B midpoint",
+      "intensity_mcd": [
+        405,
+        690,
+        190
+      ],
+      "max_min": {
+        "uncorrected": 3.63,
+        "typical_led_strip": 2.66,
+        "typical_8mm_pixel": 5.81
+      }
+    },
+    {
+      "part": "WS2816B-2121 typical",
+      "intensity_mcd": [
+        285,
+        530,
+        90
+      ],
+      "max_min": {
+        "uncorrected": 5.89,
+        "typical_led_strip": 4.32,
+        "typical_8mm_pixel": 9.42
+      }
+    },
+    {
+      "part": "WS2813A",
+      "intensity_mcd": [
+        480,
+        1500,
+        320
+      ],
+      "max_min": {
+        "uncorrected": 4.69,
+        "typical_led_strip": 3.44,
+        "typical_8mm_pixel": 7.5
+      }
+    },
+    {
+      "part": "WS2813B / WS2815 central",
+      "intensity_mcd": [
+        360,
+        1150,
+        220
+      ],
+      "max_min": {
+        "uncorrected": 5.23,
+        "typical_led_strip": 3.83,
+        "typical_8mm_pixel": 8.36
+      }
+    },
+    {
+      "part": "WS2813C",
+      "intensity_mcd": [
+        120,
+        540,
+        130
+      ],
+      "max_min": {
+        "uncorrected": 4.5,
+        "typical_led_strip": 3.11,
+        "typical_8mm_pixel": 6.65
+      }
+    },
+    {
+      "part": "WS2813D",
+      "intensity_mcd": [
+        100,
+        420,
+        110
+      ],
+      "max_min": {
+        "uncorrected": 4.2,
+        "typical_led_strip": 2.9,
+        "typical_8mm_pixel": 6.11
+      }
+    },
+    {
+      "part": "GS8208 LED5050 option",
+      "intensity_mcd": [
+        450,
+        1300,
+        280
+      ],
+      "max_min": {
+        "uncorrected": 4.64,
+        "typical_led_strip": 3.4,
+        "typical_8mm_pixel": 7.43
+      }
+    }
+  ]
+}

@@ -24,6 +24,60 @@ def profile() -> dict:
 
 
 class ProfileSchemaTest(unittest.TestCase):
+    def test_runtime_admission_requires_complete_declared_channel_set(self) -> None:
+        value = profile()
+        value["chip_encoding"]["native_code_depth"] = 8
+        value["runtime_admissible"] = False
+        value["topology"] = "rgb"
+        self.assertEqual(CHECK.validate_artifact(value, "fixture"), [])
+        value["runtime_admissible"] = True
+        self.assertIn("complete", " ".join(CHECK.validate_artifact(value, "fixture")))
+
+    def test_json_loader_rejects_non_json_numeric_constants(self) -> None:
+        for literal in ("NaN", "Infinity", "-Infinity"):
+            with self.assertRaises(ValueError):
+                CHECK.parse_artifact('{"value": ' + literal + '}')
+
+    def test_admission_combines_schema_and_identity_invariants(self) -> None:
+        value = profile()
+        value["chip_encoding"]["native_code_depth"] = 8
+        self.assertEqual(CHECK.validate_artifact(value, "fixture"), [])
+        value["identity"]["report_id"] = "different"
+        self.assertIn("identity", " ".join(CHECK.validate_artifact(value, "fixture")))
+        value = profile()
+        value["unexpected"] = True
+        self.assertTrue(CHECK.validate_artifact(value, "fixture"))
+        for malformed in (None, [], {"identity": []}):
+            self.assertTrue(CHECK.validate_artifact(malformed, "fixture"))
+
+    def test_measured_date_requires_a_real_iso_calendar_date(self) -> None:
+        for date in ("not-a-date", "2026-02-30", "20260101", 20260101):
+            value = profile()
+            value["provenance"]["kind"] = "measured"
+            value["provenance"]["measurement"] = {"date": date}
+            self.assertIn("valid ISO date", " ".join(CHECK.validate(value, "fixture")))
+
+    def test_nonfinite_values_are_rejected_at_every_depth(self) -> None:
+        for number in (float("nan"), float("inf"), float("-inf")):
+            value = profile()
+            value["reference_conditions"] = {"temperature_c": number}
+            self.assertIn("finite", " ".join(CHECK.validate(value, "fixture")))
+            value = profile()
+            value["photometric"]["channels"][0]["response"] = [{"light": number}]
+            self.assertIn("finite", " ".join(CHECK.validate(value, "fixture")))
+
+    def test_published_sensitivity_table_matches_generated_values(self) -> None:
+        tool = TOOL.with_name("generate_intensity_sensitivity.py")
+        spec = importlib.util.spec_from_file_location("sensitivity", tool)
+        assert spec and spec.loader
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        report = (tool.parent.parent / "measured-profiles" / "P1-CHARACTERIZATION.md").read_text()
+        for row in generator.data()["rows"]:
+            values = row["max_min"]
+            expected = f'| {row["part"]} | {values["uncorrected"]:.2f} | {values["typical_led_strip"]:.2f} | {values["typical_8mm_pixel"]:.2f} | 1.00 |'
+            self.assertIn(expected, report)
+
     def test_incomplete_datasheet_record_is_valid_but_not_runtime_admissible(self) -> None:
         self.assertEqual(CHECK.validate(profile(), "fixture"), [])
 

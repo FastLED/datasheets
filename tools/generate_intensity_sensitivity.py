@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "measured-profiles" / "intensity-sensitivity-v1.json"
+REPORT = ROOT / "measured-profiles" / "P1-CHARACTERIZATION.md"
 ROWS = {
     "SK6812 midpoint": (850, 1850, 850), "WS2812B midpoint": (405, 690, 190),
     "WS2813A": (480, 1500, 320), "WS2813B / WS2815 central": (360, 1150, 220),
@@ -28,7 +29,12 @@ def data() -> dict:
 def main() -> int:
     rendered = json.dumps(data(), indent=2) + "\n"
     if sys.argv[1:] == ["--check"]:
-        return 0 if OUTPUT.read_text() == rendered else 1
+        report = REPORT.read_text()
+        rows_match = all(
+            f'| {row["part"]} | {row["max_min"]["uncorrected"]:.2f} | {row["max_min"]["typical_led_strip"]:.2f} | {row["max_min"]["typical_8mm_pixel"]:.2f} | 1.00 |' in report
+            for row in data()["rows"]
+        )
+        return 0 if OUTPUT.read_text() == rendered and rows_match else 1
     OUTPUT.write_text(rendered)
     return 0
 

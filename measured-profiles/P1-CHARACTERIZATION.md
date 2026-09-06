@@ -23,17 +23,20 @@ are unknown until similarly transcribed with a corpus path, PDF page, section.
 
 ## What can and cannot be quantified now
 
-No retrieved integrated datasheet supplied CIE xy or a calibrated spectral
-power distribution usable for xy/relative-Y conversion. A neutral,
+No admitted artifact currently contains extracted CIE xy or a calibrated spectral
+power distribution usable for xy/relative-Y conversion. This is not proof that
+the corpus lacks usable spectra: SK9822 plots have not been digitized and the
+WS2816 payload has not yet been inspected. A neutral,
 primary, secondary, luminance, or ΔE2000 comparison requires each emitter's xy
 and relative radiometric/photometric scale; a luminous-intensity RGB ratio
 alone cannot establish ΔE2000.  Consequently there are **zero admissible
 derived profiles**, no defensible clusters, and no numerical score for
 `TypicalLEDStrip`, `Typical8mmPixel`, or `UncorrectedColor`.  Reporting zero
 error or a five-part illustrative sample would falsely imply full-catalog
-coverage. This is a quantified data-completeness result: 0/10 integrated
-parts with extractable spectral/xy data; 0/10 with a measured uncertainty;
-0/10 usable for the A1 normalized ΔE calculation.
+coverage. This is a quantified artifact-completeness result: 0/10 integrated
+parts with admitted extracted spectral/xy data; 0/10 with a measured uncertainty;
+0/10 currently usable for the A1 normalized ΔE calculation. P1 characterization
+remains incomplete pending source extraction and the required numerical report.
 
 When payload access is restored, calculate the three legacy models across
 *every* admissible integrated record: use the profile full-drive white as
@@ -102,10 +105,10 @@ and 8 mm `(1,224/255,140/255)`.
 | SK6812 midpoint | 2.18 | 1.60 | 3.48 | 1.00 |
 | WS2812B midpoint | 3.63 | 2.66 | 5.81 | 1.00 |
 | WS2813A | 4.69 | 3.44 | 7.50 | 1.00 |
-| WS2813B / WS2815 central | 5.23 | 3.83 | 8.35 | 1.00 |
-| WS2813C | 4.50 | 3.11 | 6.64 | 1.00 |
-| WS2813D | 4.20 | 2.90 | 6.10 | 1.00 |
-| GS8208 LED5050 option | 4.64 | 3.41 | 7.40 | 1.00 |
+| WS2813B / WS2815 central | 5.23 | 3.83 | 8.36 | 1.00 |
+| WS2813C | 4.50 | 3.11 | 6.65 | 1.00 |
+| WS2813D | 4.20 | 2.90 | 6.11 | 1.00 |
+| GS8208 LED5050 option | 4.64 | 3.40 | 7.43 | 1.00 |
 
 This covers 7 documented rows, not five cherry-picked rows. The spread rejects
 a one-profile clustering conclusion: values vary by package/current/variant,

@@ -34,7 +34,7 @@ drive conditions, and a stable raw-data pointer.  It is not valid to label a
 PDF transcription as measured.
 
 Each `photometric.channels` entry has `name` and may provide `chromaticity`,
-`relative_y`, `dominant_wavelength_nm`, `peak_wavelength_nm`, and `response`.
+`relative_y`, `dominant_wavelength_nm`, `luminous_intensity_mcd`, and `response`.
 Each numeric observation is an object with `value`, optional `unit`,
 `qualifier`, and `source`.  The only qualifiers are `min`, `typical`, `max`,
 `measured`, and `inferred`.  `source` names a repository-relative document,
@@ -50,6 +50,20 @@ actually documented or measured; it is not a gamma guess.
 documented semantics (B1), not the name "global current".
 
 ## Admission boundary
+
+Run `uv run --with jsonschema python tools/check_profile_artifacts.py`.
+Consumers, including the firmware generator, must parse with `parse_artifact`
+and call `validate_artifact` (or `validate_registry` for a collection).
+This combines Draft 2020-12 validation with format checking, finite-number
+checks and cross-field identity/provenance invariants. Schema validation alone
+is insufficient; the lower-level `validate` helper is not an admission API.
+
+Firmware generation additionally requires top-level `runtime_admissible: true`
+and a declared `topology` (`rgb`, `rgbw`, or `rgbww`). The validator then requires
+exactly the corresponding channel set, without duplicates, with every channel
+individually admissible. An absent top-level flag means false, even if individual
+channels have usable observations. RGBWW uses `warm_white` and `cool_white`;
+RGBW uses `white`.
 
 An artifact may be a catalog record with unavailable photometry, but only a
 profile having usable finite xy/Y channel data can generate an `EmitterProfile`.

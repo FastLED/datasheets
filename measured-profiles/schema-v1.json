@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastled.github.io/datasheets/measured-profiles/schema-v1.json",
+  "title": "FastLED emitter-profile artifact",
+  "type": "object",
+  "required": ["schema_version", "profile_id", "identity", "provenance", "photometric", "electrical", "chip_encoding"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "profile_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$"},
+    "identity": {"type": "object", "required": ["part", "package_variant", "w_channel_variant", "report_id"], "additionalProperties": false, "properties": {"part": {"type": "string"}, "package_variant": {"type": "string"}, "w_channel_variant": {"type": "string"}, "report_id": {"type": "string"}}},
+    "provenance": {"type": "object", "required": ["kind", "report_id", "source_documents"], "properties": {"kind": {"enum": ["datasheet_derived", "measured"]}, "report_id": {"type": "string"}, "source_documents": {"type": "array", "items": {"type": "string"}}, "measurement": {"type": "object"}}},
+    "photometric": {"type": "object", "required": ["channels"], "properties": {"channels": {"type": "array", "items": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}, "chromaticity": {"$ref": "#/$defs/xy"}, "relative_y": {"$ref": "#/$defs/observation"}, "response": {"type": "object"}}}}}},
+    "electrical": {"type": "object"},
+    "chip_encoding": {"type": "object", "required": ["five_bit_semantics"], "properties": {"five_bit_semantics": {"enum": ["secondary_slow_pwm", "current_gain", "unknown", "not_applicable"]}}}
+  },
+  "$defs": {"observation": {"type": "object", "required": ["value", "qualifier", "source"], "properties": {"value": {"type": "number"}, "unit": {"type": "string"}, "qualifier": {"enum": ["min", "typical", "max", "measured", "inferred"]}, "source": {"type": "object", "required": ["path"], "properties": {"path": {"type": "string"}, "page": {"type": "integer", "minimum": 1}, "section": {"type": "string"}}}}}, "xy": {"type": "object", "required": ["x", "y"], "properties": {"x": {"$ref": "#/$defs/observation"}, "y": {"$ref": "#/$defs/observation"}}}}
+}

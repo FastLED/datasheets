@@ -36,16 +36,46 @@ value, but no individual-diode xy or spectral distribution. A neutral,
 primary, secondary, luminance, or ΔE2000 comparison requires each emitter's xy
 and relative radiometric/photometric scale; a luminous-intensity RGB ratio
 alone cannot establish ΔE2000.  Consequently there are **zero admissible
-derived profiles**, no defensible clusters, and no numerical score for
-`TypicalLEDStrip`, `Typical8mmPixel`, or `UncorrectedColor`.  Reporting zero
-error or a five-part illustrative sample would falsely imply full-catalog
-coverage. This is a quantified artifact-completeness result: 0/10 integrated
-parts with admitted extracted spectral/xy data; 0/10 with a measured uncertainty;
-0/10 currently usable for the A1 normalized ΔE calculation. P1 characterization
-remains incomplete pending source extraction and the required numerical report.
+derived profiles** at runtime: 0/10 integrated parts with admitted extracted
+spectral/xy data, 0/10 with a measured uncertainty.
 
-When payload access is restored, calculate the three legacy models across
-*every* admissible integrated record: use the profile full-drive white as
+## Legacy-correction accuracy, as a bound
+
+What the datasheets *do* publish -- a dominant-wavelength range and a
+luminous-intensity range per emitter -- is propagated into an interval of
+admissible profiles by `tools/bound_legacy_correction_accuracy.py`, and every
+legacy model is scored across that interval under A1 (relative colorimetry,
+linear-sRGB source, Bradford to the full-drive white, ΔE2000 over a neutral
+ramp, primaries and secondaries). Two assumptions are stated, not taken from
+the PDFs: a Gaussian emitter spectrum with a per-technology FWHM interval, and
+luminous intensity proportional to Y. The generated table is
+[`LEGACY-ACCURACY-BOUND.md`](LEGACY-ACCURACY-BOUND.md)
+(`legacy-correction-accuracy-bound-v1.json`), covering the 9 integrated rows
+with wavelength and intensity data.
+
+Results:
+
+- `TypicalLEDStrip`, `Typical8mmPixel` and `UncorrectedColor` are quantified
+  as ΔE2000 intervals per part; under A1 every legacy model misses the
+  datasheet budget (median ≤ 3.0 / p95 ≤ 6.0) for every admissible profile on
+  all but one part/model cell. The corrections score worse than
+  `UncorrectedColor` under A1 because they tint the device white, which
+  relative colorimetry penalizes; a supplementary absolute-colorimetry table
+  scores their D65 design intent.
+- The admissible median alone spans more than the entire 3.0 budget in about
+  half the cells, so datasheet ranges **cannot pin a derived profile to the A1
+  budget**. That is the numerical reason for zero admissible derived profiles,
+  and why accuracy claims wait on P10 measurement.
+- Clustering: per-part intervals overlap at this resolution, so no
+  datasheet-level clustering is defensible; the WS2813 A–D variants differ in
+  intensity only and are not a bin population.
+
+These are datasheet bounds, not measurements, and are kept separate from any
+P10 instrument result.
+
+The bound implements the prescribed method, and P10 measured records reuse
+it unchanged: score the three legacy models across *every* admissible record,
+use the profile full-drive white as
 relative/adaptive white (Y=1, dark surround), test black-safe neutral ramp,
 RGB primaries and CMY secondaries, record neutral chromaticity/Y error and
 ΔE2000, then report count, median, p95 and excluded-part reasons.  Keep

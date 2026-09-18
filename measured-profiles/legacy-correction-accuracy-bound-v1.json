@@ -1,0 +1,621 @@
+{
+  "kind": "datasheet_bound_not_measurement",
+  "issue": "FastLED/FastLED#4035",
+  "assumptions": {
+    "spectrum": "Gaussian per emitter; peak solved so dominant wavelength (about equal-energy E) matches the datasheet",
+    "fwhm_nm": {
+      "red": [
+        15.0,
+        25.0
+      ],
+      "green": [
+        25.0,
+        40.0
+      ],
+      "blue": [
+        18.0,
+        30.0
+      ]
+    },
+    "relative_y": "proportional to published luminous intensity (common viewing geometry)"
+  },
+  "evaluation": {
+    "source": "linear sRGB (B6/B8 default for ordinary buffers)",
+    "target": "Bradford D65 -> device full-drive white, white at Y=1 (A1)",
+    "metric": "CIEDE2000 in CIELAB with device white as reference",
+    "test_colours": [
+      [
+        32,
+        32,
+        32
+      ],
+      [
+        64,
+        64,
+        64
+      ],
+      [
+        128,
+        128,
+        128
+      ],
+      [
+        192,
+        192,
+        192
+      ],
+      [
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        0,
+        0
+      ],
+      [
+        0,
+        255,
+        0
+      ],
+      [
+        0,
+        0,
+        255
+      ],
+      [
+        0,
+        255,
+        255
+      ],
+      [
+        255,
+        0,
+        255
+      ],
+      [
+        255,
+        255,
+        0
+      ]
+    ],
+    "budget": {
+      "median": 3.0,
+      "p95": 6.0
+    },
+    "sampling": "dominant wavelength {min, mid, max} x FWHM {low, mid, high} per channel; intensity {min, max} per channel"
+  },
+  "models": {
+    "UncorrectedColor": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "TypicalLEDStrip": [
+      1.0,
+      0.690196,
+      0.941176
+    ],
+    "Typical8mmPixel": [
+      1.0,
+      0.878431,
+      0.54902
+    ]
+  },
+  "rows": [
+    {
+      "part": "SK6812",
+      "admissible_profiles": 5832,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 6.91,
+          "nominal_p95": 10.9,
+          "median_range": [
+            3.6,
+            10.5
+          ],
+          "median_spread": 6.9,
+          "absolute_nominal_median": 24.48,
+          "absolute_nominal_p95": 30.97,
+          "p95_range": [
+            7.77,
+            15.41
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 15.01,
+          "nominal_p95": 19.31,
+          "median_range": [
+            13.08,
+            16.29
+          ],
+          "median_spread": 3.21,
+          "absolute_nominal_median": 25.86,
+          "absolute_nominal_p95": 33.79,
+          "p95_range": [
+            17.41,
+            21.08
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 12.39,
+          "nominal_p95": 19.59,
+          "median_range": [
+            10.87,
+            14.48
+          ],
+          "median_spread": 3.61,
+          "absolute_nominal_median": 19.48,
+          "absolute_nominal_p95": 25.86,
+          "p95_range": [
+            17.92,
+            21.04
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2812B",
+      "admissible_profiles": 5832,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 1.22,
+          "nominal_p95": 14.45,
+          "median_range": [
+            1.08,
+            3.69
+          ],
+          "median_spread": 2.61,
+          "absolute_nominal_median": 22.75,
+          "absolute_nominal_p95": 28.84,
+          "p95_range": [
+            12.64,
+            16.52
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 15.11,
+          "nominal_p95": 19.71,
+          "median_range": [
+            13.48,
+            16.41
+          ],
+          "median_spread": 2.93,
+          "absolute_nominal_median": 26.63,
+          "absolute_nominal_p95": 32.48,
+          "p95_range": [
+            18.94,
+            20.42
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 12.98,
+          "nominal_p95": 20.11,
+          "median_range": [
+            12.51,
+            13.89
+          ],
+          "median_spread": 1.38,
+          "absolute_nominal_median": 18.09,
+          "absolute_nominal_p95": 24.44,
+          "p95_range": [
+            19.18,
+            21.12
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2813A",
+      "admissible_profiles": 729,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 4.4,
+          "nominal_p95": 9.33,
+          "median_range": [
+            1.48,
+            5.52
+          ],
+          "median_spread": 4.04,
+          "absolute_nominal_median": 16.32,
+          "absolute_nominal_p95": 23.27,
+          "p95_range": [
+            8.38,
+            10.4
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 14.94,
+          "nominal_p95": 21.46,
+          "median_range": [
+            14.55,
+            15.27
+          ],
+          "median_spread": 0.72,
+          "absolute_nominal_median": 19.51,
+          "absolute_nominal_p95": 26.25,
+          "p95_range": [
+            21.06,
+            21.79
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 10.64,
+          "nominal_p95": 18.15,
+          "median_range": [
+            10.2,
+            11.84
+          ],
+          "median_spread": 1.64,
+          "absolute_nominal_median": 12.21,
+          "absolute_nominal_p95": 16.21,
+          "p95_range": [
+            17.21,
+            19.16
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2813B",
+      "admissible_profiles": 729,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 3.99,
+          "nominal_p95": 9.34,
+          "median_range": [
+            1.32,
+            5.31
+          ],
+          "median_spread": 3.99,
+          "absolute_nominal_median": 15.51,
+          "absolute_nominal_p95": 22.05,
+          "p95_range": [
+            8.36,
+            10.44
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 15.12,
+          "nominal_p95": 21.64,
+          "median_range": [
+            14.71,
+            15.46
+          ],
+          "median_spread": 0.75,
+          "absolute_nominal_median": 18.1,
+          "absolute_nominal_p95": 24.93,
+          "p95_range": [
+            21.24,
+            21.97
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 10.52,
+          "nominal_p95": 17.89,
+          "median_range": [
+            9.99,
+            11.52
+          ],
+          "median_spread": 1.53,
+          "absolute_nominal_median": 12.7,
+          "absolute_nominal_p95": 16.5,
+          "p95_range": [
+            17.0,
+            18.85
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2813C",
+      "admissible_profiles": 729,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 2.24,
+          "nominal_p95": 6.68,
+          "median_range": [
+            1.74,
+            3.43
+          ],
+          "median_spread": 1.68,
+          "absolute_nominal_median": 19.48,
+          "absolute_nominal_p95": 26.26,
+          "p95_range": [
+            6.0,
+            7.99
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": false
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 15.16,
+          "nominal_p95": 21.68,
+          "median_range": [
+            14.03,
+            15.51
+          ],
+          "median_spread": 1.47,
+          "absolute_nominal_median": 20.88,
+          "absolute_nominal_p95": 28.01,
+          "p95_range": [
+            21.24,
+            22.03
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 11.72,
+          "nominal_p95": 18.47,
+          "median_range": [
+            10.75,
+            12.81
+          ],
+          "median_spread": 2.06,
+          "absolute_nominal_median": 16.44,
+          "absolute_nominal_p95": 22.84,
+          "p95_range": [
+            17.2,
+            19.77
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2813D",
+      "admissible_profiles": 729,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 2.72,
+          "nominal_p95": 7.05,
+          "median_range": [
+            2.04,
+            4.03
+          ],
+          "median_spread": 1.99,
+          "absolute_nominal_median": 19.8,
+          "absolute_nominal_p95": 26.78,
+          "p95_range": [
+            6.22,
+            8.42
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 14.96,
+          "nominal_p95": 21.48,
+          "median_range": [
+            14.14,
+            15.29
+          ],
+          "median_spread": 1.15,
+          "absolute_nominal_median": 21.71,
+          "absolute_nominal_p95": 28.72,
+          "p95_range": [
+            21.05,
+            21.82
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 11.73,
+          "nominal_p95": 18.71,
+          "median_range": [
+            10.75,
+            12.81
+          ],
+          "median_spread": 2.06,
+          "absolute_nominal_median": 15.8,
+          "absolute_nominal_p95": 22.18,
+          "p95_range": [
+            17.43,
+            20.0
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2815",
+      "admissible_profiles": 729,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 5.11,
+          "nominal_p95": 10.41,
+          "median_range": [
+            1.76,
+            7.85
+          ],
+          "median_spread": 6.09,
+          "absolute_nominal_median": 15.31,
+          "absolute_nominal_p95": 21.7,
+          "p95_range": [
+            8.42,
+            16.26
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 15.35,
+          "nominal_p95": 21.87,
+          "median_range": [
+            12.99,
+            18.33
+          ],
+          "median_spread": 5.34,
+          "absolute_nominal_median": 18.17,
+          "absolute_nominal_p95": 22.83,
+          "p95_range": [
+            21.24,
+            25.95
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 10.36,
+          "nominal_p95": 17.55,
+          "median_range": [
+            9.92,
+            14.38
+          ],
+          "median_spread": 4.46,
+          "absolute_nominal_median": 14.76,
+          "absolute_nominal_p95": 18.79,
+          "p95_range": [
+            17.0,
+            20.0
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "WS2816B-2121",
+      "admissible_profiles": 5832,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 6.67,
+          "nominal_p95": 15.44,
+          "median_range": [
+            2.64,
+            10.78
+          ],
+          "median_spread": 8.14,
+          "absolute_nominal_median": 6.55,
+          "absolute_nominal_p95": 15.59,
+          "p95_range": [
+            7.77,
+            26.7
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 16.92,
+          "nominal_p95": 21.13,
+          "median_range": [
+            14.76,
+            20.08
+          ],
+          "median_spread": 5.32,
+          "absolute_nominal_median": 17.48,
+          "absolute_nominal_p95": 21.43,
+          "p95_range": [
+            19.75,
+            27.92
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 14.51,
+          "nominal_p95": 18.63,
+          "median_range": [
+            9.77,
+            17.19
+          ],
+          "median_spread": 7.43,
+          "absolute_nominal_median": 13.95,
+          "absolute_nominal_p95": 17.85,
+          "p95_range": [
+            15.62,
+            25.26
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    },
+    {
+      "part": "GS8208 LED5050 option",
+      "admissible_profiles": 729,
+      "models": {
+        "UncorrectedColor": {
+          "nominal_median": 2.88,
+          "nominal_p95": 9.53,
+          "median_range": [
+            2.17,
+            8.5
+          ],
+          "median_spread": 6.33,
+          "absolute_nominal_median": 17.29,
+          "absolute_nominal_p95": 24.27,
+          "p95_range": [
+            8.11,
+            18.52
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "TypicalLEDStrip": {
+          "nominal_median": 14.58,
+          "nominal_p95": 21.09,
+          "median_range": [
+            13.55,
+            18.03
+          ],
+          "median_spread": 4.48,
+          "absolute_nominal_median": 21.3,
+          "absolute_nominal_p95": 27.66,
+          "p95_range": [
+            20.19,
+            24.89
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        },
+        "Typical8mmPixel": {
+          "nominal_median": 10.84,
+          "nominal_p95": 18.55,
+          "median_range": [
+            10.55,
+            16.58
+          ],
+          "median_spread": 6.03,
+          "absolute_nominal_median": 10.43,
+          "absolute_nominal_p95": 14.15,
+          "p95_range": [
+            17.49,
+            22.27
+          ],
+          "within_budget_everywhere": false,
+          "within_budget_nowhere": true
+        }
+      }
+    }
+  ]
+}

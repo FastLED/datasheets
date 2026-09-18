@@ -42,9 +42,9 @@ spectral/xy data, 0/10 with a measured uncertainty.
 ## Legacy-correction accuracy, as a bound
 
 What the datasheets *do* publish -- a dominant-wavelength range and a
-luminous-intensity range per emitter -- is propagated into an interval of
-admissible profiles by `tools/bound_legacy_correction_accuracy.py`, and every
-legacy model is scored across that interval under A1 (relative colorimetry,
+luminous-intensity range per emitter -- is sampled into a grid of profiles
+(each range's ends and midpoint) by `tools/bound_legacy_correction_accuracy.py`,
+and every legacy model is scored across that grid under A1 (relative colorimetry,
 linear-sRGB source, Bradford to the full-drive white, ΔE2000 over a neutral
 ramp, primaries and secondaries). Two assumptions are stated, not taken from
 the PDFs: a Gaussian emitter spectrum with a per-technology FWHM interval, and
@@ -56,17 +56,19 @@ with wavelength and intensity data.
 Results:
 
 - `TypicalLEDStrip`, `Typical8mmPixel` and `UncorrectedColor` are quantified
-  as ΔE2000 intervals per part; under A1 every legacy model misses the
-  datasheet budget (median ≤ 3.0 / p95 ≤ 6.0) for every admissible profile on
-  all but one part/model cell. The corrections score worse than
+  as ΔE2000 ranges per part; under A1 legacy models miss the datasheet budget
+  (median ≤ 3.0 / p95 ≤ 6.0) at every sampled profile in nearly every
+  part/model cell (see the generated table for the count). The grid is an
+  inner bound on the continuous ranges, not a proof over them. The corrections score worse than
   `UncorrectedColor` under A1 because they tint the device white, which
   relative colorimetry penalizes; a supplementary absolute-colorimetry table
   scores their D65 design intent.
-- The admissible median alone spans more than the entire 3.0 budget in about
-  half the cells, so datasheet ranges **cannot pin a derived profile to the A1
+- The median over the sampled grid alone spans more than the entire 3.0
+  budget in about half the cells. A sampled spread can only understate the
+  continuous one, so datasheet ranges **cannot pin a derived profile to the A1
   budget**. That is the numerical reason for zero admissible derived profiles,
   and why accuracy claims wait on P10 measurement.
-- Clustering: per-part intervals overlap at this resolution, so no
+- Clustering: per-part ranges overlap at this resolution, so no
   datasheet-level clustering is defensible; the WS2813 A–D variants differ in
   intensity only and are not a bin population.
 

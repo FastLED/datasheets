@@ -1,0 +1,46 @@
+name: tests
+
+# Runs the Python test suite and the checked-in artifact checks on every push
+# to main and every pull request. The colour tools compare against the
+# CIE 1931 2-degree CMF table, which is CC BY-SA 4.0 and not redistributed
+# here: it is fetched at run time and rejected unless its SHA-256 matches the
+# pin the tools themselves enforce.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Fetch the pinned CIE 1931 2-degree CMF table
+        run: |
+          set -euo pipefail
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/CIE_xyz_1931_2deg.csv" \
+            https://files.cie.co.at/Publications-datasets/CIE_xyz_1931_2deg.csv
+          echo "fa663e3535a7e0763a745993a1f0a192eb0275ac46ad2d1befd7626841e713c1  $RUNNER_TEMP/CIE_xyz_1931_2deg.csv" \
+            | sha256sum -c -
+
+      - name: Unit tests
+        env:
+          DATASHEETS_CIE_CSV: ${{ runner.temp }}/CIE_xyz_1931_2deg.csv
+        run: uv run --no-project --with jsonschema python -m unittest discover -s tests -v
+
+      - name: Checked-in artifacts are current
+        env:
+          CIE: ${{ runner.temp }}/CIE_xyz_1931_2deg.csv
+        run: |
+          set -euo pipefail
+          uv run --no-project --with jsonschema python tools/check_profile_artifacts.py
+          uv run --no-project python tools/generate_intensity_sensitivity.py --check
+          uv run --no-project python tools/bound_legacy_correction_accuracy.py "$CIE" --check
